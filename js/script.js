@@ -1,434 +1,483 @@
-/* ===================================================
-   TYPING ANIMATION
-=================================================== */
+/* =========================================================
+   SETTINGS
+========================================================= */
 
-const roles = [
-    'Software Engineer',
-    'DevOps Engineer',
-    'Cloud Architect',
-    'SRE in Progress'
+const GITHUB_USERNAME = "Ashikur14r";
+const PROJECT_LIMIT = 6;
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1500;
+
+const GITHUB_API_URL =
+    `https://api.github.com/users/${encodeURIComponent(GITHUB_USERNAME)}/repos` +
+    `?type=owner&sort=updated&direction=desc&per_page=100`;
+
+/*
+ * Local fallback projects from your original portfolio.
+ * Add each project's real URLs below when you have them.
+ * Leave a URL blank to hide that link.
+ */
+const FALLBACK_PROJECTS = [
+    {
+        name: "TrustChain",
+        description:
+            "A digital transaction evidence platform designed to make second-hand electronics transactions more transparent and trustworthy.",
+        language: "PHP",
+        technologies: ["Laravel", "PHP", "MySQL", "Blade"],
+        repoUrl: "",
+        demoUrl: "",
+        bannerUrl: ""
+    },
+    {
+        name: "Birthday Surprise",
+        description:
+            "A small interactive website created as a personal birthday surprise project.",
+        language: "JavaScript",
+        technologies: ["HTML", "CSS", "JavaScript"],
+        repoUrl: "",
+        demoUrl: "",
+        bannerUrl: ""
+    }
 ];
 
-let roleIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
-const typingSpeed = 100;
-const deletingSpeed = 50;
-const delayBetweenRoles = 2000;
 
-function typeRoles() {
-    const typingElement = document.getElementById('typing-text');
-    
-    // Make sure element exists
-    if (!typingElement) {
-        console.error('Typing element not found');
+/* =========================================================
+   TYPING ANIMATION
+========================================================= */
+
+function startTypingAnimation() {
+    const typingElement = document.getElementById("typing-text");
+
+    if (!typingElement) return;
+
+    const roles = [
+        "Software Engineer",
+        "Aspiring DevOps Engineer",
+        "Cloud & Linux Learner",
+        "Automation Enthusiast"
+    ];
+
+    // Respect the visitor's reduced-motion preference.
+    if (
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+        typingElement.textContent = roles[0];
         return;
     }
 
-    const currentRole = roles[roleIndex];
+    let roleIndex = 0;
+    let characterIndex = 0;
+    let isDeleting = false;
 
-    if (isDeleting) {
-        charIndex--;
-    } else {
-        charIndex++;
+    function typeNextCharacter() {
+        const currentRole = roles[roleIndex];
+
+        if (isDeleting) {
+            characterIndex--;
+        } else {
+            characterIndex++;
+        }
+
+        typingElement.textContent = currentRole.slice(0, characterIndex);
+
+        let delay = isDeleting ? 55 : 95;
+
+        if (!isDeleting && characterIndex === currentRole.length) {
+            isDeleting = true;
+            delay = 1600;
+        } else if (isDeleting && characterIndex === 0) {
+            isDeleting = false;
+            roleIndex = (roleIndex + 1) % roles.length;
+            delay = 350;
+        }
+
+        window.setTimeout(typeNextCharacter, delay);
     }
 
-    typingElement.textContent = currentRole.substring(0, charIndex);
-
-    if (!isDeleting && charIndex === currentRole.length) {
-        isDeleting = true;
-        setTimeout(typeRoles, delayBetweenRoles);
-    } else if (isDeleting && charIndex === 0) {
-        isDeleting = false;
-        roleIndex = (roleIndex + 1) % roles.length;
-        setTimeout(typeRoles, 500);
-    } else {
-        setTimeout(typeRoles, isDeleting ? deletingSpeed : typingSpeed);
-    }
+    typeNextCharacter();
 }
 
-// Start typing animation when page loads
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', typeRoles);
-} else {
-    typeRoles();
+
+/* =========================================================
+   GITHUB PROJECTS: FETCH, RETRY, AND FALLBACK
+========================================================= */
+
+function wait(milliseconds) {
+    return new Promise(resolve => window.setTimeout(resolve, milliseconds));
 }
 
-/* ===================================================
-   FETCH GITHUB PROJECTS
-=================================================== */
-
-const GITHUB_USERNAME = 'Ashikur14r';
-const GITHUB_API_URL = `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=6`;
-
-async function fetchGitHubProjects() {
-    const projectsContainer = document.getElementById('projects-container');
-
-    if (!projectsContainer) {
-        console.error('Projects container not found');
-        return;
-    }
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-        const response = await fetch(GITHUB_API_URL);
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch projects');
-        }
-
-        const projects = await response.json();
-
-        if (!Array.isArray(projects) || projects.length === 0) {
-            projectsContainer.innerHTML = `
-                <div class="loading-message" style="grid-column: 1 / -1;">
-                    <p>No projects found yet. Check back soon!</p>
-                </div>
-            `;
-            return;
-        }
-
-        projectsContainer.innerHTML = '';
-
-        projects.forEach(project => {
-            const projectCard = createProjectCard(project);
-            projectsContainer.appendChild(projectCard);
+        return await fetch(url, {
+            ...options,
+            signal: controller.signal
         });
-
-    } catch (error) {
-        console.error('Error fetching projects:', error);
-        projectsContainer.innerHTML = `
-            <div class="loading-message" style="grid-column: 1 / -1;">
-                <p>Unable to load projects at the moment. Please try again later.</p>
-            </div>
-        `;
+    } finally {
+        window.clearTimeout(timeoutId);
     }
+}
+
+async function fetchGitHubProjects() {
+    const container = document.getElementById("projects-container");
+
+    if (!container) {
+        console.warn('Could not find the element with id="projects-container".');
+        return;
+    }
+
+    container.setAttribute("aria-live", "polite");
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+            const response = await fetchWithTimeout(GITHUB_API_URL, {
+                headers: {
+                    Accept: "application/vnd.github+json"
+                }
+            });
+
+            if (!response.ok) {
+                const error = new Error(
+                    `GitHub API returned status ${response.status}.`
+                );
+
+                // Retry rate limits and server errors. Other HTTP errors
+                // are unlikely to be fixed by another immediate request.
+                error.retryable =
+                    response.status === 429 || response.status >= 500;
+
+                throw error;
+            }
+
+            const repositories = await response.json();
+
+            if (!Array.isArray(repositories)) {
+                throw new Error("GitHub returned an unexpected response.");
+            }
+
+            // Show non-fork repositories, newest updates first.
+            const projects = repositories
+                .filter(repository => repository && !repository.fork)
+                .slice(0, PROJECT_LIMIT);
+
+            if (projects.length === 0) {
+                showFallbackProjects(
+                    container,
+                    "No public repositories were returned. Showing the projects configured on this page."
+                );
+                return;
+            }
+
+            renderProjects(container, projects);
+            return;
+
+        } catch (error) {
+            console.warn(`GitHub project request ${attempt} failed:`, error);
+
+            const shouldRetry =
+                error.retryable !== false && attempt < MAX_ATTEMPTS;
+
+            if (!shouldRetry) {
+                break;
+            }
+
+            const nextAttempt = attempt + 1;
+
+            showLoadingMessage(
+                container,
+                `Couldn't load GitHub projects. Retrying (${nextAttempt} of ${MAX_ATTEMPTS})…`
+            );
+
+            // Wait 1.5 seconds after the first failure, then 3 seconds.
+            await wait(RETRY_DELAY_MS * attempt);
+        }
+    }
+
+    showFallbackProjects(
+        container,
+        "GitHub projects couldn't be loaded right now. Showing the projects configured on this page instead."
+    );
+}
+
+
+/* =========================================================
+   PROJECT CARD RENDERING
+========================================================= */
+
+function renderProjects(container, projects) {
+    const cards = projects.map(createProjectCard);
+    container.replaceChildren(...cards);
+}
+
+function showFallbackProjects(container, message) {
+    if (!FALLBACK_PROJECTS.length) {
+        showLoadingMessage(container, message);
+        return;
+    }
+
+    renderProjects(container, FALLBACK_PROJECTS);
+
+    const notice = document.createElement("p");
+    notice.className = "project-fallback-notice";
+    notice.textContent = message;
+    notice.style.gridColumn = "1 / -1";
+    notice.style.textAlign = "center";
+    notice.style.color = "var(--text-light)";
+    notice.style.fontSize = "0.9rem";
+
+    container.appendChild(notice);
+}
+
+function showLoadingMessage(container, message) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "loading-message";
+    wrapper.style.gridColumn = "1 / -1";
+    wrapper.setAttribute("role", "status");
+
+    const icon = document.createElement("i");
+    icon.className = "fas fa-spinner fa-spin";
+    icon.setAttribute("aria-hidden", "true");
+
+    const text = document.createElement("p");
+    text.textContent = message;
+
+    wrapper.append(icon, text);
+    container.replaceChildren(wrapper);
 }
 
 function createProjectCard(project) {
-    const card = document.createElement('div');
-    card.className = 'project-card';
+    const card = document.createElement("article");
+    card.className = "project-card";
 
-    // Create banner with language-based colors
-    const bannerColor = getBannerColor(project.language);
-    const bannerHTML = `
-        <div class="project-banner" style="background: ${bannerColor}">
-            <i class="fas fa-${getIconForLanguage(project.language)}"></i>
-        </div>
-    `;
+    const banner = createProjectBanner(project);
+    const content = document.createElement("div");
+    content.className = "project-content";
 
-    // Create language tags
-    const languagesHTML = project.language ? `
-        <div class="project-languages">
-            <span class="language-tag">${project.language}</span>
-        </div>
-    ` : '';
+    const title = document.createElement("h3");
+    title.className = "project-title";
+    title.textContent = project.name || "Untitled project";
 
-    // Create project footer with stats and links
-    const projectFooterHTML = `
-        <div class="project-footer">
-            <div class="project-stats">
-                <div class="project-stat">
-                    <i class="fas fa-star"></i>
-                    <span>${project.stargazers_count}</span>
-                </div>
-                <div class="project-stat">
-                    <i class="fas fa-code-branch"></i>
-                    <span>${project.forks_count}</span>
-                </div>
-            </div>
-            <div class="project-links">
-                <a href="${project.html_url}" target="_blank" class="project-link" title="View on GitHub">
-                    <i class="fab fa-github"></i>
-                </a>
-                ${project.homepage ? `
-                    <a href="${project.homepage}" target="_blank" class="project-link" title="Live Demo">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                ` : ''}
-            </div>
-        </div>
-    `;
+    const description = document.createElement("p");
+    description.className = "project-description";
+    description.textContent =
+        project.description || "No description has been added yet.";
 
-    // Combine all HTML
-    card.innerHTML = `
-        ${bannerHTML}
-        <div class="project-content">
-            <div class="project-title">${escapeHtml(project.name)}</div>
-            <div class="project-description">
-                ${project.description ? escapeHtml(project.description) : 'No description available'}
-            </div>
-            ${languagesHTML}
-            ${projectFooterHTML}
-        </div>
-    `;
+    content.append(title, description);
 
+    const technologies = getProjectTechnologies(project);
+
+    if (technologies.length > 0) {
+        const technologyList = document.createElement("div");
+        technologyList.className = "project-languages";
+
+        technologies.forEach(technology => {
+            const tag = document.createElement("span");
+            tag.className = "language-tag";
+            tag.textContent = technology;
+            technologyList.appendChild(tag);
+        });
+
+        content.appendChild(technologyList);
+    }
+
+    const footer = createProjectFooter(project);
+
+    if (footer) {
+        content.appendChild(footer);
+    }
+
+    card.append(banner, content);
     return card;
 }
 
-function getBannerColor(language) {
-    const colors = {
-        'JavaScript': 'linear-gradient(135deg, #f7df1e, #f1e05a)',
-        'TypeScript': 'linear-gradient(135deg, #3178c6, #2d79c7)',
-        'Python': 'linear-gradient(135deg, #3776ab, #306998)',
-        'PHP': 'linear-gradient(135deg, #777bb4, #4b5ba0)',
-        'HTML': 'linear-gradient(135deg, #e34c26, #f16529)',
-        'CSS': 'linear-gradient(135deg, #563d7c, #2965f1)',
-        'Java': 'linear-gradient(135deg, #007396, #f89820)',
-        'C++': 'linear-gradient(135deg, #00599c, #004482)',
-        'Go': 'linear-gradient(135deg, #00add8, #006a9e)',
-        'Rust': 'linear-gradient(135deg, #ce422b, #a84a2a)',
-        'Ruby': 'linear-gradient(135deg, #cc342d, #701516)',
-        'Shell': 'linear-gradient(135deg, #4eaa25, #5a9a3c)',
+function createProjectBanner(project) {
+    const banner = document.createElement("div");
+    banner.className = "project-banner";
+    banner.style.background = getBannerGradient(project.language);
+
+    const bannerUrl = getSafeHttpUrl(project.bannerUrl);
+
+    if (bannerUrl) {
+        const image = document.createElement("img");
+        image.src = bannerUrl;
+        image.alt = `${project.name || "Project"} banner`;
+        image.loading = "lazy";
+
+        image.addEventListener("error", () => {
+            image.remove();
+            addBannerIcon(banner);
+        }, { once: true });
+
+        banner.appendChild(image);
+    } else {
+        addBannerIcon(banner);
+    }
+
+    return banner;
+}
+
+function addBannerIcon(banner) {
+    const icon = document.createElement("i");
+    icon.className = "fas fa-code-branch";
+    icon.setAttribute("aria-hidden", "true");
+    banner.appendChild(icon);
+}
+
+function getProjectTechnologies(project) {
+    if (Array.isArray(project.technologies) && project.technologies.length > 0) {
+        return project.technologies;
+    }
+
+    return project.language ? [project.language] : [];
+}
+
+function createProjectFooter(project) {
+    const footer = document.createElement("div");
+    footer.className = "project-footer";
+
+    const stats = document.createElement("div");
+    stats.className = "project-stats";
+
+    if (Number.isFinite(project.stargazers_count)) {
+        stats.appendChild(
+            createProjectStat("fas fa-star", project.stargazers_count, "Stars")
+        );
+    }
+
+    if (Number.isFinite(project.forks_count)) {
+        stats.appendChild(
+            createProjectStat(
+                "fas fa-code-branch",
+                project.forks_count,
+                "Forks"
+            )
+        );
+    }
+
+    const links = document.createElement("div");
+    links.className = "project-links";
+
+    const repositoryUrl = getSafeHttpUrl(project.html_url || project.repoUrl);
+    const demoUrl = getSafeHttpUrl(project.homepage || project.demoUrl);
+
+    if (repositoryUrl) {
+        links.appendChild(
+            createProjectLink(
+                repositoryUrl,
+                "fab fa-github",
+                `View ${project.name || "project"} on GitHub`
+            )
+        );
+    }
+
+    if (demoUrl) {
+        links.appendChild(
+            createProjectLink(
+                demoUrl,
+                "fas fa-external-link-alt",
+                `Open ${project.name || "project"} demo`
+            )
+        );
+    }
+
+    if (stats.childElementCount === 0 && links.childElementCount === 0) {
+        return null;
+    }
+
+    if (stats.childElementCount > 0) {
+        footer.appendChild(stats);
+    }
+
+    if (links.childElementCount > 0) {
+        footer.appendChild(links);
+    }
+
+    return footer;
+}
+
+function createProjectStat(iconClass, value, label) {
+    const stat = document.createElement("span");
+    stat.className = "project-stat";
+    stat.setAttribute("aria-label", `${value} ${label}`);
+
+    const icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("aria-hidden", "true");
+
+    const text = document.createElement("span");
+    text.textContent = String(value);
+
+    stat.append(icon, text);
+    return stat;
+}
+
+function createProjectLink(url, iconClass, label) {
+    const link = document.createElement("a");
+    link.className = "project-link";
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.title = label;
+    link.setAttribute("aria-label", label);
+
+    const icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("aria-hidden", "true");
+
+    link.appendChild(icon);
+    return link;
+}
+
+function getSafeHttpUrl(value) {
+    if (typeof value !== "string" || !value.trim()) {
+        return "";
+    }
+
+    try {
+        const url = new URL(value);
+
+        if (url.protocol === "https:" || url.protocol === "http:") {
+            return url.href;
+        }
+    } catch {
+        // Ignore invalid URLs.
+    }
+
+    return "";
+}
+
+function getBannerGradient(language) {
+    const gradients = {
+        javascript: "linear-gradient(135deg, #b7791f, #d69e2e)",
+        typescript: "linear-gradient(135deg, #235a97, #3178c6)",
+        python: "linear-gradient(135deg, #306998, #3776ab)",
+        php: "linear-gradient(135deg, #4b5ba0, #777bb4)",
+        html: "linear-gradient(135deg, #c2410c, #e34c26)",
+        css: "linear-gradient(135deg, #4338ca, #2965f1)",
+        java: "linear-gradient(135deg, #007396, #c75b12)",
+        "c++": "linear-gradient(135deg, #004482, #00599c)",
+        shell: "linear-gradient(135deg, #347a24, #4eaa25)"
     };
 
-    return colors[language] || 'linear-gradient(135deg, #0066cc, #058b9f)';
+    const key = typeof language === "string" ? language.toLowerCase() : "";
+
+    return gradients[key] || "linear-gradient(135deg, #0066cc, #058b9f)";
 }
 
-function getIconForLanguage(language) {
-    const icons = {
-        'JavaScript': 'js',
-        'TypeScript': 'js',
-        'Python': 'python',
-        'PHP': 'php',
-        'HTML': 'html5',
-        'CSS': 'css3',
-        'Java': 'java',
-        'C++': 'c',
-        'Go': 'golang',
-        'Rust': 'rust',
-        'Ruby': 'gem',
-        'Shell': 'terminal',
-    };
 
-    return icons[language] || 'code';
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
-
-/* ===================================================
-   SMOOTH SCROLL ACTIVE NAVBAR LINK
-=================================================== */
-
-function highlightActiveNavLink() {
-    const sections = document.querySelectorAll('section');
-    const navLinks = document.querySelectorAll('.navbar a');
-
-    window.addEventListener('scroll', () => {
-        let current = '';
-        
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            
-            if (window.pageYOffset >= sectionTop - 200) {
-                current = section.getAttribute('id');
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${current}`) {
-                link.classList.add('active');
-            }
-        });
-    });
-}
-
-/* ===================================================
-   ADD ACTIVE NAV STYLE
-=================================================== */
-
-function addActiveNavStyle() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .navbar a.active {
-            color: var(--primary-color) !important;
-        }
-
-        .navbar a.active::after {
-            width: 100% !important;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-/* ===================================================
-   SMOOTH SCROLLING FOR NAVIGATION LINKS
-=================================================== */
-
-function setupSmoothScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-}
-
-/* ===================================================
-   ANIMATE ELEMENTS ON SCROLL
-=================================================== */
-
-function observeElements() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver(function (entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.animation = 'slideUp 0.6s ease forwards';
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
-
-    const elements = document.querySelectorAll(
-        '.skill-card, .cert-card, .project-card, .info-box'
-    );
-
-    elements.forEach(element => {
-        observer.observe(element);
-    });
-}
-
-/* ===================================================
-   ADD SCROLL ANIMATION STYLES
-=================================================== */
-
-function addScrollAnimationStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .skill-card,
-        .cert-card,
-        .project-card,
-        .info-box {
-            opacity: 0;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .fa-spinner {
-            animation: spin 2s linear infinite !important;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-/* ===================================================
-   SCROLL TO TOP BUTTON
-=================================================== */
-
-function setupScrollToTop() {
-    const scrollTopBtn = document.createElement('button');
-    scrollTopBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-    scrollTopBtn.className = 'scroll-to-top';
-    scrollTopBtn.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 50px;
-        height: 50px;
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 999;
-        transition: all 0.3s ease;
-        font-size: 18px;
-        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-    `;
-
-    document.body.appendChild(scrollTopBtn);
-
-    window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 300) {
-            scrollTopBtn.style.display = 'flex';
-        } else {
-            scrollTopBtn.style.display = 'none';
-        }
-    });
-
-    scrollTopBtn.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-
-    scrollTopBtn.addEventListener('mouseover', function() {
-        this.style.transform = 'translateY(-5px)';
-    });
-
-    scrollTopBtn.addEventListener('mouseout', function() {
-        this.style.transform = 'translateY(0)';
-    });
-}
-
-/* ===================================================
-   INITIALIZE ALL FUNCTIONS
-=================================================== */
+/* =========================================================
+   INITIALIZE
+========================================================= */
 
 function initializePortfolio() {
-    console.log('🚀 Initializing portfolio...');
-    
-    addActiveNavStyle();
-    highlightActiveNavLink();
-    setupSmoothScroll();
-    addScrollAnimationStyles();
-    observeElements();
-    setupScrollToTop();
+    startTypingAnimation();
     fetchGitHubProjects();
-    
-    console.log('✅ Portfolio initialized successfully!');
 }
 
-// Check if DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializePortfolio);
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializePortfolio);
 } else {
     initializePortfolio();
 }
-
-/* ===================================================
-   LOG MESSAGE
-=================================================== */
-
-console.log('%cWelcome to Ashikur Rahman\'s Portfolio! 👋', 'color: #0066cc; font-size: 16px; font-weight: bold;');
-console.log('%cFeel free to check out my GitHub and LinkedIn!', 'color: #058b9f; font-size: 14px;');
