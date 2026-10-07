@@ -50,20 +50,11 @@ function startTypingAnimation() {
     if (!typingElement) return;
 
     const roles = [
-        "Software Engineer",
         "Aspiring DevOps Engineer",
-        "Cloud & Linux Learner",
+        "Cloud Engineering Learner",
+        "SRE Learner",
         "Automation Enthusiast"
     ];
-
-    // Respect the visitor's reduced-motion preference.
-    if (
-        window.matchMedia &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-        typingElement.textContent = roles[0];
-        return;
-    }
 
     let roleIndex = 0;
     let characterIndex = 0;
@@ -80,11 +71,11 @@ function startTypingAnimation() {
 
         typingElement.textContent = currentRole.slice(0, characterIndex);
 
-        let delay = isDeleting ? 55 : 95;
+        let delay = isDeleting ? 55 : 72;
 
         if (!isDeleting && characterIndex === currentRole.length) {
             isDeleting = true;
-            delay = 1600;
+            delay = 1400;
         } else if (isDeleting && characterIndex === 0) {
             isDeleting = false;
             roleIndex = (roleIndex + 1) % roles.length;
