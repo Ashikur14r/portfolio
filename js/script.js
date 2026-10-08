@@ -27,9 +27,9 @@ const PROJECT_DESCRIPTION_OVERRIDES = {
     "ashikur14r/dld-midterm-preparation-":
         "Interactive Digital Logic Design midterm study guide covering number systems, complements, logic gates, Boolean algebra, SOP/POS, K-maps, and adders, with worked examples, exam questions, and interactive calculators and simulations.",
     "ashikur14r/strict-sample-landing-page":
-        "Responsive landing page built with HTML and CSS, featuring a clean hero section, feature highlights, image gallery, contact form, and footer.",
+        "Responsive landing-page recreation built with HTML and CSS, featuring a clean hero, feature highlights, image gallery, contact form, and footer.",
     "ashikur14r/guess-the-number-c":
-        "Console-based number guessing game written in C, with random number generation, unlimited attempts, hints, and an attempt counter."
+        "Console number-guessing game written in C with random number generation, unlimited guesses, hints, and an attempt counter."
 };
 
 const GITHUB_API_URL =
