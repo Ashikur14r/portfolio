@@ -11,7 +11,7 @@ const FEATURED_PROJECT = {
     name: "CampusOS",
     context: "CPCCU AI Web App Hackathon",
     description:
-        "A student portal that brings campus clubs and events, study resources, helpdesk support, and lost-and-found reports together in one web app.",
+        "A responsive student portal that brings campus clubs and events, academic resources, helpdesk support, and lost-and-found reports into one place. Students can search and filter content, explore campus listings, and try demo workflows in Guest Mode.",
     language: "TypeScript",
     technologies: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Supabase"],
     repoUrl: "https://github.com/cpccu/Intellix",
