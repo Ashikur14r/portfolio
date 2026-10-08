@@ -19,6 +19,13 @@ const FEATURED_PROJECT = {
     bannerUrl: ""
 };
 
+const PROJECT_DESCRIPTION_OVERRIDES = {
+    "ashikur14r/portfolio":
+        "Personal portfolio website showcasing my DevOps and cloud engineering journey, skills, certifications, and hands-on projects. Built with HTML, CSS, and JavaScript.",
+    "ashikur14r/ashikur14r":
+        "GitHub profile README introducing my DevOps and cloud engineering journey, technical skills, certifications, learning progress, and career goals."
+};
+
 const GITHUB_API_URL =
     `https://api.github.com/users/${encodeURIComponent(GITHUB_USERNAME)}/repos` +
     `?type=owner&sort=updated&direction=desc&per_page=100`;
@@ -290,9 +297,9 @@ function createProjectCard(project) {
     const description = document.createElement("p");
     description.className = "project-description";
     const repositoryName = project.full_name?.toLowerCase();
-    description.textContent = repositoryName === "ashikur14r/portfolio"
-        ? "Personal portfolio website showcasing my DevOps and cloud engineering journey, skills, certifications, and hands-on projects. Built with HTML, CSS, and JavaScript."
-        : project.description || "No description has been added yet.";
+    description.textContent = PROJECT_DESCRIPTION_OVERRIDES[repositoryName]
+        || project.description
+        || "No description has been added yet.";
 
     content.append(title, description);
 
