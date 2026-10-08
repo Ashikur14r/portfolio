@@ -23,7 +23,9 @@ const PROJECT_DESCRIPTION_OVERRIDES = {
     "ashikur14r/portfolio":
         "Personal portfolio website showcasing my DevOps and cloud engineering journey, skills, certifications, and hands-on projects. Built with HTML, CSS, and JavaScript.",
     "ashikur14r/ashikur14r":
-        "GitHub profile README introducing my DevOps and cloud engineering journey, technical skills, certifications, learning progress, and career goals."
+        "GitHub profile README introducing my DevOps and cloud engineering journey, technical skills, certifications, learning progress, and career goals.",
+    "ashikur14r/dld-midterm-preparation-":
+        "Interactive Digital Logic Design midterm study guide covering number systems, complements, logic gates, Boolean algebra, SOP/POS, K-maps, and adders, with worked examples, exam questions, and interactive calculators and simulations."
 };
 
 const GITHUB_API_URL =
