@@ -289,8 +289,10 @@ function createProjectCard(project) {
 
     const description = document.createElement("p");
     description.className = "project-description";
-    description.textContent =
-        project.description || "No description has been added yet.";
+    const repositoryName = project.full_name?.toLowerCase();
+    description.textContent = repositoryName === "ashikur14r/portfolio"
+        ? "Personal portfolio website showcasing my DevOps and cloud engineering journey, skills, certifications, and hands-on projects. Built with HTML, CSS, and JavaScript."
+        : project.description || "No description has been added yet.";
 
     content.append(title, description);
 
