@@ -32,6 +32,12 @@ const PROJECT_DESCRIPTION_OVERRIDES = {
         "Console number-guessing game written in C with random number generation, unlimited guesses, hints, and an attempt counter."
 };
 
+const PROJECT_DEMO_OVERRIDES = {
+    // Use the public GitHub Pages deployment because the Vercel deployment
+    // currently requires Vercel authentication for visitors.
+    "ashikur14r/portfolio": "https://ashikur14r.github.io/portfolio/"
+};
+
 const GITHUB_API_URL =
     `https://api.github.com/users/${encodeURIComponent(GITHUB_USERNAME)}/repos` +
     `?type=owner&sort=updated&direction=desc&per_page=100`;
@@ -403,7 +409,10 @@ function createProjectFooter(project) {
     links.className = "project-links";
 
     const repositoryUrl = getSafeHttpUrl(project.html_url || project.repoUrl);
-    const demoUrl = getSafeHttpUrl(project.homepage || project.demoUrl);
+    const projectKey = project.full_name?.toLowerCase();
+    const demoUrl = getSafeHttpUrl(
+        PROJECT_DEMO_OVERRIDES[projectKey] || project.homepage || project.demoUrl
+    );
 
     if (repositoryUrl) {
         links.appendChild(
