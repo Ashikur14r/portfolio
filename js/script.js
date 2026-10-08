@@ -7,6 +7,18 @@ const PROJECT_LIMIT = 6;
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1500;
 
+const FEATURED_PROJECT = {
+    name: "CampusOS",
+    context: "CPCCU AI Web App Hackathon",
+    description:
+        "A student portal that brings campus clubs and events, study resources, helpdesk support, and lost-and-found reports together in one web app.",
+    language: "TypeScript",
+    technologies: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Supabase"],
+    repoUrl: "https://github.com/cpccu/Intellix",
+    demoUrl: "https://intellix-psi.vercel.app",
+    bannerUrl: ""
+};
+
 const GITHUB_API_URL =
     `https://api.github.com/users/${encodeURIComponent(GITHUB_USERNAME)}/repos` +
     `?type=owner&sort=updated&direction=desc&per_page=100`;
@@ -17,6 +29,7 @@ const GITHUB_API_URL =
  * Leave a URL blank to hide that link.
  */
 const FALLBACK_PROJECTS = [
+    FEATURED_PROJECT,
     {
         name: "TrustChain",
         description:
@@ -148,7 +161,8 @@ async function fetchGitHubProjects() {
                 throw new Error("GitHub returned an unexpected response.");
             }
 
-            // Show non-fork repositories, newest updates first.
+            // Keep CampusOS visible even though its repository belongs to
+            // the CPCCU organization rather than this portfolio's owner.
             const projects = repositories
                 .filter(repository => repository && !repository.fork)
                 .slice(0, PROJECT_LIMIT);
@@ -161,7 +175,14 @@ async function fetchGitHubProjects() {
                 return;
             }
 
-            renderProjects(container, projects);
+            const otherProjects = projects.filter(
+                project => project.full_name?.toLowerCase() !== "cpccu/intellix"
+            );
+
+            renderProjects(container, [
+                FEATURED_PROJECT,
+                ...otherProjects.slice(0, PROJECT_LIMIT - 1)
+            ]);
             return;
 
         } catch (error) {
@@ -249,6 +270,22 @@ function createProjectCard(project) {
     const title = document.createElement("h3");
     title.className = "project-title";
     title.textContent = project.name || "Untitled project";
+
+    if (project.context) {
+        const context = document.createElement("div");
+        context.className = "project-context";
+
+        const badge = document.createElement("span");
+        badge.className = "project-context-badge";
+        badge.textContent = "Hackathon Project";
+
+        const event = document.createElement("span");
+        event.className = "project-context-event";
+        event.textContent = project.context;
+
+        context.append(badge, event);
+        content.appendChild(context);
+    }
 
     const description = document.createElement("p");
     description.className = "project-description";

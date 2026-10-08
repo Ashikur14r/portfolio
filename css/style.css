@@ -936,6 +936,32 @@ img {
     flex-direction: column;
 }
 
+.project-context {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.project-context-badge {
+    padding: 4px 9px;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 28%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    color: var(--primary-color);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.project-context-event {
+    color: var(--text-light);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .project-title {
     font-size: 18px;
     font-weight: 700;
