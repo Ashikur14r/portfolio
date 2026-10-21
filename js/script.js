@@ -19,6 +19,17 @@ const FEATURED_PROJECT = {
     bannerUrl: ""
 };
 
+const TRUSTCHAIN_PROJECT = {
+    name: "TrustChain",
+    description:
+        "A Laravel app for documenting second-hand device sales, preserving SHA-256 evidence hashes, and issuing verifiable certificates after buyer confirmation.",
+    language: "PHP",
+    technologies: ["Laravel", "PHP", "PostgreSQL", "Supabase", "Docker"],
+    repoUrl: "",
+    demoUrl: "https://trustchain-rb9n.onrender.com",
+    bannerUrl: ""
+};
+
 const PROJECT_DESCRIPTION_OVERRIDES = {
     "ashikur14r/portfolio":
         "Personal portfolio website showcasing my DevOps and cloud engineering journey, skills, certifications, and hands-on projects. Built with HTML, CSS, and JavaScript.",
@@ -49,16 +60,7 @@ const GITHUB_API_URL =
  */
 const FALLBACK_PROJECTS = [
     FEATURED_PROJECT,
-    {
-        name: "TrustChain",
-        description:
-            "A digital transaction evidence platform designed to make second-hand electronics transactions more transparent and trustworthy.",
-        language: "PHP",
-        technologies: ["Laravel", "PHP", "MySQL", "Blade"],
-        repoUrl: "",
-        demoUrl: "",
-        bannerUrl: ""
-    },
+    TRUSTCHAIN_PROJECT,
     {
         name: "Birthday Surprise",
         description:
@@ -200,7 +202,8 @@ async function fetchGitHubProjects() {
 
             renderProjects(container, [
                 FEATURED_PROJECT,
-                ...otherProjects.slice(0, PROJECT_LIMIT - 1)
+                TRUSTCHAIN_PROJECT,
+                ...otherProjects.slice(0, PROJECT_LIMIT - 2)
             ]);
             return;
 
