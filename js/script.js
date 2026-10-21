@@ -25,7 +25,7 @@ const TRUSTCHAIN_PROJECT = {
         "A Laravel app for documenting second-hand device sales, preserving SHA-256 evidence hashes, and issuing verifiable certificates after buyer confirmation.",
     language: "PHP",
     technologies: ["Laravel", "PHP", "PostgreSQL", "Supabase", "Docker"],
-    repoUrl: "",
+    repoUrl: "https://github.com/Ashikur14r/trustchain",
     demoUrl: "https://trustchain-rb9n.onrender.com",
     bannerUrl: ""
 };
