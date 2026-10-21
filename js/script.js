@@ -390,28 +390,6 @@ function getProjectTechnologies(project) {
 }
 
 function createProjectFooter(project) {
-    const footer = document.createElement("div");
-    footer.className = "project-footer";
-
-    const stats = document.createElement("div");
-    stats.className = "project-stats";
-
-    if (Number.isFinite(project.stargazers_count)) {
-        stats.appendChild(
-            createProjectStat("fas fa-star", project.stargazers_count, "Stars")
-        );
-    }
-
-    if (Number.isFinite(project.forks_count)) {
-        stats.appendChild(
-            createProjectStat(
-                "fas fa-code-branch",
-                project.forks_count,
-                "Forks"
-            )
-        );
-    }
-
     const links = document.createElement("div");
     links.className = "project-links";
 
@@ -426,7 +404,7 @@ function createProjectFooter(project) {
             createProjectLink(
                 repositoryUrl,
                 "fab fa-github",
-                `View ${project.name || "project"} on GitHub`
+                "View " + (project.name || "project") + " on GitHub"
             )
         );
     }
@@ -436,40 +414,19 @@ function createProjectFooter(project) {
             createProjectLink(
                 demoUrl,
                 "fas fa-external-link-alt",
-                `Open ${project.name || "project"} demo`
+                "Open " + (project.name || "project") + " demo"
             )
         );
     }
 
-    if (stats.childElementCount === 0 && links.childElementCount === 0) {
+    if (links.childElementCount === 0) {
         return null;
     }
 
-    if (stats.childElementCount > 0) {
-        footer.appendChild(stats);
-    }
-
-    if (links.childElementCount > 0) {
-        footer.appendChild(links);
-    }
-
+    const footer = document.createElement("div");
+    footer.className = "project-footer";
+    footer.appendChild(links);
     return footer;
-}
-
-function createProjectStat(iconClass, value, label) {
-    const stat = document.createElement("span");
-    stat.className = "project-stat";
-    stat.setAttribute("aria-label", `${value} ${label}`);
-
-    const icon = document.createElement("i");
-    icon.className = iconClass;
-    icon.setAttribute("aria-hidden", "true");
-
-    const text = document.createElement("span");
-    text.textContent = String(value);
-
-    stat.append(icon, text);
-    return stat;
 }
 
 function createProjectLink(url, iconClass, label) {
