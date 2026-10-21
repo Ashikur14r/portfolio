@@ -197,7 +197,11 @@ async function fetchGitHubProjects() {
             }
 
             const otherProjects = projects.filter(
-                project => project.full_name?.toLowerCase() !== "cpccu/intellix"
+                project => {
+                    const repositoryName = project.full_name?.toLowerCase();
+                    return repositoryName !== "cpccu/intellix"
+                        && repositoryName !== "ashikur14r/trustchain";
+                }
             );
 
             renderProjects(container, [
